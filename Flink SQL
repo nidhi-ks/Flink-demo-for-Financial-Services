@@ -1,25 +1,65 @@
+Please follow these steps to get started with the workshop:
+
+Create a free account:
+
+Sign up at Confluent Cloud.
+Create a new environment:
+
+After logging in, click on 'Add new environment' and give it a meaningful name (e.g., <your name>-environment).
+For now, you can select the Essentials package for Stream Governance.
+Set up a new cluster:
+
+Click on 'Add cluster' and select a basic cluster for the workshop.
+Choose your preferred cloud provider and region, then click Launch.
+And that’s it! Your Confluent Cloud Kafka cluster is now up and running!
+
+
 Creating a datagen connector to pull data in Confluent Cloud : 
 
-Configuration : 
+Follow these steps to create a topic and ingest sample data:
 
-{
-  "config": {
-    "connector.class": "DatagenSource",
-    "name": "DatagenSourceConnector_1",
-    "kafka.auth.mode": "KAFKA_API_KEY",
-    "kafka.api.key": "MNQKPKTJSJUAX3DH",
-    "kafka.api.secret": "****************************************************************",
-    "kafka.topic": "trade_data",
-    "schema.context.name": "default",
-    "output.data.format": "AVRO",
-    "json.output.decimal.format": "BASE64",
-    "quickstart": "STOCK_TRADES",
-    "max.interval": "1000",
-    "tasks.max": "1"
-  }
-}
+Create a new topic:
 
-The data will be ingested to the trade_data topic 
+Navigate to the Topics tab and click Create New Topic.
+Name the topic 'trades-data'.
+Add a sample data connector:
+
+Go to the Connectors tab, click Add Connector, and search for the Sample Data connector.
+Select 'trades-data' as the target topic. Select output message format to be avro
+Configure the connector:
+
+In the Advanced Configuration section, choose Trades as the data set.
+Leave the other settings as default and click to start the connector provisioning.
+After a few seconds, the connector will start running, and you can verify that data is being ingested into the 'trades-data' topic.
+
+Create a new topic:
+
+Navigate to the Topics tab and click Create New Topic.
+Name the topic 'users-data'.
+Add a sample data connector:
+
+Go to the Connectors tab, click Add Connector, and search for the Sample Data connector.
+Select 'users-data' as the target topic.Select output message format to be avro
+Configure the connector:
+
+In the Advanced Configuration section, choose Users as the data set.
+Leave the other settings as default and click to start the connector provisioning.
+After a few seconds, the connector will start running, and you can verify that data is being ingested into the 'users-data' topic.
+
+Creating a compute pool in Flink : 
+
+Follow these steps to set up a compute pool in Flink:
+
+Navigate to the Flink tab:
+
+Hover over the Flink tab and click on Create Compute Pool.
+Configure the compute pool:
+
+Ensure the region you select matches the region of your Kafka cluster.
+Choose your preferred cloud provider and region.
+You can leave the Max CFU setting as default.
+Provide a meaningful name for your compute pool.
+It will take a couple of minutes, and your compute pool will be up and running.
 
 Creating tables in Flink : 
 
@@ -86,6 +126,26 @@ WHERE quantity > 0
   AND price > 0
   AND (side = 'BUY' OR side = 'SELL');
 
+Joining two tables users data and trades data in Flink using inner join :
+
+SELECT 
+    t.side,
+    t.quantity,
+    t.symbol,
+    t.price,
+    t.account,
+    t.userid,
+    u.registertime,
+    u.regionid,
+    u.gender
+FROM 
+    trades_topic t
+INNER JOIN 
+    users_data u 
+ON 
+    t.userid = u.userid;
+
+
 Running Aggregates and Window functions 
 
 We will run a tumbling window function which calaculates the total volume of the shares traded and sum of the price of each user for every 10 minutes 
@@ -111,7 +171,27 @@ SELECT window_start, window_end, userid , SUM(quantity) as `total_number_of_shar
 
 The output of the above query is inserted into broker_trade_volume topic . I want to push the data into MongoDB for storing . 
 
+Prerequisite : Have a Mongo Atlas cluster  running 
+
 Creating Mongo Atlas Sink connector : 
+
+Follow these steps to set up the MongoDB Atlas Sink connector:
+
+Navigate to the Connectors tab:
+
+Hover over the Connectors tab and select the MongoDB Atlas Sink Connector.
+Select the topic:
+
+Choose the topic you want to push data from. In this case, it’s the broker_trade_volume topic.
+Provide authentication details:
+
+Enter the required details such as hostname, database username, password, database name, and collection name.
+Configuration and validation:
+
+The system will internally validate the connector's connection to MongoDB Atlas. You can leave the remaining settings as default.
+After a few seconds, your MongoDB connector will be running, and you can verify the data ingestion into your MongoDB Atlas cluster.
+
+Below is the connector configuration for you to verify 
 
 Configuration : 
 {
