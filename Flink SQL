@@ -2,7 +2,8 @@ Please follow these steps to get started with the workshop:
 
 Create a free account:
 
-Sign up at Confluent Cloud.
+Sign up at Confluent Cloud at https://www.confluent.io/confluent-cloud/tryfree/.
+
 Create a new environment:
 
 After logging in, click on 'Add new environment' and give it a meaningful name (e.g., <your name>-environment).
