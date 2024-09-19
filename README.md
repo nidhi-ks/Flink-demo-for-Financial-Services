@@ -60,8 +60,8 @@ confluent api-key create --resource cloud --description "API for terraform"
 It may take a couple of minutes for the API key to be ready.
 Save the API key and secret. The secret is not retrievable later.
 
-API Key    | <your generated key>                                          
-API Secret | <your generated secret>                                      
+API Key    | <yourkey>                                          
+API Secret | <yoursecret>                                      
 
 
 Unzip the provided terraform-techsummit-2024.zip and perform the following command within the unzipped directory:
@@ -71,6 +71,18 @@ confluent_cloud_api_key = "{Cloud API Key}"
 confluent_cloud_api_secret = "{Cloud API Key Secret}"
 use_prefix = "{Your Name}"
 EOF
+
+
+Run the following commands to provision the environment
+
+terraform init
+terraform plan
+terraform apply
+
+After completing the tasks, please remove your environment to avoid costs. You can recreate it anytime, using the steps above
+
+terraform destroy
+
 
 
 
