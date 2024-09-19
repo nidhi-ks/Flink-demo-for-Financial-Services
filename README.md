@@ -46,4 +46,31 @@ In our brokerage use case, we'll implement this pattern to process trade data mo
 
 By the end of this workshop, you'll have a practical understanding of how to implement the shift-left pattern using Flink SQL and Confluent Cloud.
 
+Running Terraform scripts:
+
+Before you can run this terraform section you need the following software:
+1. User account on Confluent Cloud
+2. Local install of Terraform
+3. Local install Confluent CLI, install the cli
+
+Create an API Key using confluent cli:
+
+confluent login
+confluent api-key create --resource cloud --description "API for terraform"
+# It may take a couple of minutes for the API key to be ready.
+# Save the API key and secret. The secret is not retrievable later.
+#+------------+---------------------------------------------------------------+
+#| API Key    | <your generated key>                                          |
+#| API Secret | <your generated secret>                                       |
+#+------------+---------------------------------------------------------------+
+
+Unzip the provided terraform-techsummit-2024.zip and perform the following command within the unzipped directory:
+
+cat > terraform.tfvars <<EOF
+confluent_cloud_api_key = "{Cloud API Key}"
+confluent_cloud_api_secret = "{Cloud API Key Secret}"
+use_prefix = "{Your Name}"
+EOF
+
+
 
