@@ -57,12 +57,12 @@ Create an API Key using confluent cli:
 
 confluent login
 confluent api-key create --resource cloud --description "API for terraform"
-# It may take a couple of minutes for the API key to be ready.
-# Save the API key and secret. The secret is not retrievable later.
-#+------------+---------------------------------------------------------------+
-#| API Key    | <your generated key>                                          |
-#| API Secret | <your generated secret>                                       |
-#+------------+---------------------------------------------------------------+
+It may take a couple of minutes for the API key to be ready.
+Save the API key and secret. The secret is not retrievable later.
+
+API Key    | <your generated key>                                          
+API Secret | <your generated secret>                                      
+
 
 Unzip the provided terraform-techsummit-2024.zip and perform the following command within the unzipped directory:
 
