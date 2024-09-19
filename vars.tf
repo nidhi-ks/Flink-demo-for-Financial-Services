@@ -80,12 +80,12 @@ variable "sr_package" {
 # --------------------------------------------
 variable "cc_connector_dsoc_products_name" {
   type    = string
-  default = "Products"
+  default = "Trades"
 }
 
 variable "cc_connector_dsoc_customers_name" {
   type    = string
-  default = "Customers"
+  default = "Users"
 }
 
 
