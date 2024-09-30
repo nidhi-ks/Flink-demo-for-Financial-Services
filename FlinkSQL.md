@@ -147,7 +147,7 @@ FROM trade_data;
 ### 3. Creating the `filtered_trades` Table
 
 ```sql
-CREATE TABLE `Nidhi-workspace`.`flinkdemo-finserv`.`filtered_trades` (
+CREATE TABLE `filtered_trades` (
   `key` VARBINARY(2147483647),
   `side` VARCHAR(2147483647) NOT NULL COMMENT 'A simulated trade side (buy or sell or short)',
   `quantity` INT NOT NULL COMMENT 'A simulated random quantity of the trade',
@@ -160,13 +160,14 @@ CREATE TABLE `Nidhi-workspace`.`flinkdemo-finserv`.`filtered_trades` (
 
 ```sql
 Copy code
-INSERT INTO filtered_trades
+INSERT INTO `filtered_trades`
 SELECT * 
 FROM trades_topic
 WHERE quantity > 0 
   AND price > 0 
   AND (side = 'BUY' OR side = 'SELL');
 ```
+
 ### 4. Joining `trades_topic` and `users_data` Using an Inner Join
 
 ```sql
