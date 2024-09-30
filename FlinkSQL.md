@@ -227,7 +227,7 @@ GROUP BY
 5. Validate the connection to MongoDB Atlas.
 6. Verify data ingestion in MongoDB Atlas.
 
-###MongoDB Atlas Sink Connector Configuration
+### MongoDB Atlas Sink Connector Configuration
 
 ```sql
 {
