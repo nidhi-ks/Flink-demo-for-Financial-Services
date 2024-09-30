@@ -1,72 +1,81 @@
-Please follow these steps to get started with the workshop:
+# Workshop Instructions
 
-Create a free account:
+## 1. Create a free account
+Sign up for Confluent Cloud at [Confluent Cloud - Try Free](https://www.confluent.io/confluent-cloud/tryfree/).
 
-Sign up at Confluent Cloud at https://www.confluent.io/confluent-cloud/tryfree/.
+---
 
-Create a new environment:
+## 2. Create a new environment
+- After logging in, click on **'Add new environment'**.
+- Give it a meaningful name (e.g., `<your-name>-environment`).
+- Select the **Essentials** package for Stream Governance.
 
-After logging in, click on 'Add new environment' and give it a meaningful name (e.g., <your name>-environment).
-For now, you can select the Essentials package for Stream Governance.
-Set up a new cluster:
+---
 
-Click on 'Add cluster' and select a basic cluster for the workshop.
-Choose your preferred cloud provider and region, then click Launch.
-And that’s it! Your Confluent Cloud Kafka cluster is now up and running!
+## 3. Set up a new cluster
+- Click on **'Add cluster'** and select a **Basic Cluster** for the workshop.
+- Choose your preferred **cloud provider** and **region**, then click **Launch**.
+- Your Confluent Cloud Kafka cluster is now up and running!
 
+---
 
-Creating a datagen connector to pull data in Confluent Cloud : 
+## 4. Creating a Datagen Connector to Pull Data in Confluent Cloud
 
-Follow these steps to create a topic and ingest sample data:
+### Create a new topic:
+- Navigate to the **Topics** tab and click **Create New Topic**.
+- Name the topic `trades-data`.
 
-Create a new topic:
+### Add a sample data connector:
+- Go to the **Connectors** tab, click **Add Connector**, and search for the **Sample Data** connector.
+- Select `trades-data` as the **target topic**.
+- Set **Output Message Format** to **Avro**.
 
-Navigate to the Topics tab and click Create New Topic.
-Name the topic 'trades-data'.
-Add a sample data connector:
+### Configure the connector:
+- In the **Advanced Configuration** section, choose **Trades** as the dataset.
+- Leave the other settings as default and start the connector provisioning.
+- Verify data ingestion into the `trades-data` topic.
 
-Go to the Connectors tab, click Add Connector, and search for the Sample Data connector.
-Select 'trades-data' as the target topic. Select output message format to be avro
-Configure the connector:
+---
 
-In the Advanced Configuration section, choose Trades as the data set.
-Leave the other settings as default and click to start the connector provisioning.
-After a few seconds, the connector will start running, and you can verify that data is being ingested into the 'trades-data' topic.
+### Create another topic:
+- Navigate to the **Topics** tab and click **Create New Topic**.
+- Name the topic `users-data`.
 
-Create a new topic:
+### Add another sample data connector:
+- Go to the **Connectors** tab, click **Add Connector**, and search for the **Sample Data** connector.
+- Select `users-data` as the target topic and set **Output Message Format** to **Avro**.
 
-Navigate to the Topics tab and click Create New Topic.
-Name the topic 'users-data'.
-Add a sample data connector:
+### Configure the connector:
+- In the **Advanced Configuration** section, choose **Users** as the dataset.
+- Start the connector provisioning and verify data ingestion into the `users-data` topic.
 
-Go to the Connectors tab, click Add Connector, and search for the Sample Data connector.
-Select 'users-data' as the target topic.Select output message format to be avro
-Configure the connector:
+---
 
-In the Advanced Configuration section, choose Users as the data set.
-Leave the other settings as default and click to start the connector provisioning.
-After a few seconds, the connector will start running, and you can verify that data is being ingested into the 'users-data' topic.
+## 5. Creating a Compute Pool in Flink
 
-Creating a compute pool in Flink : 
+### Navigate to the Flink tab:
+- Hover over the **Flink** tab and click **Create Compute Pool**.
 
-Follow these steps to set up a compute pool in Flink:
+### Configure the compute pool:
+- Ensure the region matches your Kafka cluster's region.
+- Choose your preferred **cloud provider** and **region**.
+- Leave the **Max CFU** setting as default.
+- Provide a meaningful name for your compute pool.
+- Your compute pool will be up and running in a few minutes.
 
-Navigate to the Flink tab:
+---
 
-Hover over the Flink tab and click on Create Compute Pool.
-Configure the compute pool:
+## 6. Creating Tables in Flink
 
-Ensure the region you select matches the region of your Kafka cluster.
-Choose your preferred cloud provider and region.
-You can leave the Max CFU setting as default.
-Provide a meaningful name for your compute pool.
-It will take a couple of minutes, and your compute pool will be up and running.
+### View the `trade_data` table:
+Run the following command to view the table structure:
 
-Creating tables in Flink : 
+```sql
+SHOW CREATE TABLE trade_data;
+```
 
-1. To review the trade_data table created by flink run SHOW CREATE TABLE trade_data;
-
-Output : CREATE TABLE `Nidhi-workspace`.`flinkdemo-finserv`.`trade_data` (
+```sql
+Output : CREATE TABLE `trade_data` (
   `key` VARBINARY(2147483647),
   `side` VARCHAR(2147483647) NOT NULL COMMENT 'A simulated trade side (buy or sell or short)',
   `quantity` INT NOT NULL COMMENT 'A simulated random quantity of the trade',
@@ -87,6 +96,7 @@ WITH (
   'scan.startup.mode' = 'earliest-offset',
   'value.format' = 'avro-registry'
 );
+```
 
 2. Let's add all the data from trade_data table to trades_topic , please run the below command 
 
