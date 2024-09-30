@@ -51,15 +51,11 @@ Before you can run this Terraform section, ensure you have the following softwar
 ### Create an API Key using Confluent CLI:
 ```bash
 confluent login
-confluent api-key create --resource cloud --description "API for terraform"
 ```
-
-Create an API Key using confluent cli:
-
 ```bash
-confluent login
 confluent api-key create --resource cloud --description "API for terraform"
 ```
+
 It may take a couple of minutes for the API key to be ready.
 Save the API key and secret. The secret is not retrievable later.
 
@@ -67,8 +63,6 @@ Save the API key and secret. The secret is not retrievable later.
 API Key    | <yourkey>                                          
 API Secret | <yoursecret>                                      
 ```
-
-Unzip the provided terraform-techsummit-2024.zip and perform the following command within the unzipped directory:
 
 ```bash
 cat > terraform.tfvars <<EOF
@@ -80,13 +74,17 @@ EOF
 
 Run the following commands to provision the environment
 
+```bash
 terraform init
 terraform plan
 terraform apply
+```
 
 After completing the tasks, please remove your environment to avoid costs. You can recreate it anytime, using the steps above
 
+```bash
 terraform destroy
+```
 
 
 
