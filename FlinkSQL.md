@@ -94,7 +94,9 @@ Run the following command to view the table structure:
 SHOW CREATE TABLE trade_data;
 ```
 
-Output : ## 1. Creating the `trade_data` Table
+Output : 
+
+### 1. Creating the `trade_data` Table
 
 ```sql
 CREATE TABLE `trade_data` (
