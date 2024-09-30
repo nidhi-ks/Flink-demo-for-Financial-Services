@@ -19,11 +19,26 @@ Sign up for Confluent Cloud at [Confluent Cloud - Try Free](https://www.confluen
 
 ---
 
+Alternatively , we have terraform scripts to automate the steps , please refer to `cflt-cloud.tf` for the cloud configuration
+
+---
+
 ## 4. Creating a Datagen Connector to Pull Data in Confluent Cloud
 
 ### Create a new topic:
 - Navigate to the **Topics** tab and click **Create New Topic**.
 - Name the topic `trades-data`.
+
+### Create another topic:
+- Navigate to the **Topics** tab and click **Create New Topic**.
+- Name the topic `users-data`.
+
+---
+
+Alternatively , we have terraform scripts to automate the steps , please refer to `topics.tf` for the creating topics
+
+---
+
 
 ### Add a sample data connector:
 - Go to the **Connectors** tab, click **Add Connector**, and search for the **Sample Data** connector.
@@ -37,10 +52,6 @@ Sign up for Confluent Cloud at [Confluent Cloud - Try Free](https://www.confluen
 
 ---
 
-### Create another topic:
-- Navigate to the **Topics** tab and click **Create New Topic**.
-- Name the topic `users-data`.
-
 ### Add another sample data connector:
 - Go to the **Connectors** tab, click **Add Connector**, and search for the **Sample Data** connector.
 - Select `users-data` as the target topic and set **Output Message Format** to **Avro**.
@@ -50,6 +61,11 @@ Sign up for Confluent Cloud at [Confluent Cloud - Try Free](https://www.confluen
 - Start the connector provisioning and verify data ingestion into the `users-data` topic.
 
 ---
+
+Alternatively , we have terraform scripts to automate the steps , please refer to `cflt-connectors.tf` for the setting up datagen connectors
+
+---
+
 
 ## 5. Creating a Compute Pool in Flink
 
@@ -62,6 +78,10 @@ Sign up for Confluent Cloud at [Confluent Cloud - Try Free](https://www.confluen
 - Leave the **Max CFU** setting as default.
 - Provide a meaningful name for your compute pool.
 - Your compute pool will be up and running in a few minutes.
+
+---
+
+Alternatively , we have terraform scripts to automate the steps , please refer to `flink.tf` for the spinning up a flink compute pool
 
 ---
 
@@ -224,8 +244,98 @@ GROUP BY
     "rate.limiting.every.n": "0",
     "write.strategy": "DefaultWriteModelStrategy",
     "kafka.auth.mode": "KAFKA_API_KEY",
-    "kafka.api.key": "
+    "kafka.api.key": "MNQKPKTJSJUAX3DH",
+    "kafka.api.secret": "****************************************************************",
+    "topics": "broker_trade_volume",
+    "connection.host": "cflt-test.5afyk.mongodb.net",
+    "connection.user": "test-cflt",
+    "connection.password": "*********",
+    "database": "trade-data",
+    "collection": "trade_data_volume",
+    "doc.id.strategy": "BsonOidStrategy",
+    "doc.id.strategy.overwrite.existing": "false",
+    "document.id.strategy.uuid.format": "string",
+    "key.projection.type": "none",
+    "value.projection.type": "none",
+    "namespace.mapper.class": "DefaultNamespaceMapper",
+    "server.api.deprecation.errors": "false",
+    "server.api.strict": "false",
+    "max.num.retries": "3",
+    "retries.defer.timeout": "5000",
+    "timeseries.timefield.auto.convert": "false",
+    "timeseries.timefield.auto.convert.date.format": "yyyy-MM-dd[['T'][ ]][HH:mm:ss[[.][SSSSSS][SSS]][ ]VV[ ]'['VV']'][HH:mm:ss[[.][SSSSSS][SSS]][ ]X][HH:mm:ss[[.][SSSSSS][SSS]]]",
+    "timeseries.timefield.auto.convert.locale.language.tag": "en",
+    "timeseries.expire.after.seconds": "0",
+    "ts.granularity": "None",
+    "max.poll.interval.ms": "300000",
+    "max.poll.records": "500",
+    "tasks.max": "1"
+  }
+}
+
 ```
+
+Please note that the user should have read write access on the database , collection specified in the connector . The data flows from Confluent Cloud to Mongo Atlas trade_data_volume collection . 
+Verify the data inside the Mongo Atlas UI . 
+
+## 8. Deploying a Flink statement in Terraform 
+
+Please refer to the below example to run a flink sql statement in terraform 
+
+Example : 
+
+```bash
+# Deploy a Flink SQL statement to Confluent Cloud.
+resource "confluent_flink_statement" "my_flink_statement" {
+  organization {
+    id = data.confluent_organization.my_org.id
+  }
+
+  environment {
+    id = confluent_environment.my_env.id
+  }
+
+  compute_pool {
+    id = confluent_flink_compute_pool.my_compute_pool.id
+  }
+
+  principal {
+    id = confluent_service_account.my_service_account.id
+  }
+
+  # This SQL reads data from source_topic, filters it, and ingests the filtered data into sink_topic.
+  statement = <<EOT
+    CREATE TABLE my_sink_topic AS
+    SELECT
+      window_start,
+      window_end,
+      SUM(price) AS total_revenue,
+      COUNT(*) AS cnt
+    FROM
+    TABLE(TUMBLE(TABLE `examples`.`marketplace`.`orders`, DESCRIPTOR($rowtime), INTERVAL '1' MINUTE))
+    GROUP BY window_start, window_end;
+    EOT
+
+  properties = {
+    "sql.current-catalog"  = confluent_environment.my_env.display_name
+    "sql.current-database" = confluent_kafka_cluster.my_kafka_cluster.display_name
+  }
+
+  rest_endpoint = data.confluent_flink_region.my_flink_region.rest_endpoint
+
+  credentials {
+    key    = confluent_api_key.my_flink_api_key.id
+    secret = confluent_api_key.my_flink_api_key.secret
+  }
+
+  depends_on = [
+    confluent_api_key.my_flink_api_key,
+    confluent_flink_compute_pool.my_compute_pool,
+    confluent_kafka_cluster.my_kafka_cluster
+  ]
+}
+```
+
 
 
 
