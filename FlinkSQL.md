@@ -87,7 +87,8 @@ Alternatively , we have terraform scripts to automate the steps , please refer t
 
 ## 6. Creating Tables in Flink
 
-### View the `trade_data` table:
+### 1. View the `trade_data` table:
+
 Run the following command to view the table structure:
 
 ```sql
@@ -95,8 +96,6 @@ SHOW CREATE TABLE trade_data;
 ```
 
 Output : 
-
-### 1. Creating the `trade_data` Table
 
 ```sql
 CREATE TABLE `trade_data` (
