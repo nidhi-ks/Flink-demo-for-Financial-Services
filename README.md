@@ -42,7 +42,7 @@ In our brokerage use case, we'll implement this pattern to process trade data mo
 By the end of this workshop, you'll have a practical understanding of how to implement the shift-left pattern using **Flink SQL** and **Confluent Cloud**.
 
 
-# Workshop Options
+## Workshop Options
 
 You can proceed with the workshop in the following ways:
 
