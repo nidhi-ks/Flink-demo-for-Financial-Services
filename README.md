@@ -41,51 +41,19 @@ In our brokerage use case, we'll implement this pattern to process trade data mo
 
 By the end of this workshop, you'll have a practical understanding of how to implement the shift-left pattern using **Flink SQL** and **Confluent Cloud**.
 
-## Running Terraform Scripts
 
-Before you can run this Terraform section, ensure you have the following software:
-- A user account on **Confluent Cloud**
-- Local install of **Terraform**
-- Local install of the **Confluent CLI**
+# Workshop Options
 
-### Create an API Key using Confluent CLI:
-```bash
-confluent login
-```
-```bash
-confluent api-key create --resource cloud --description "API for terraform"
-```
+You can proceed with the workshop in the following ways:
 
-It may take a couple of minutes for the API key to be ready.
-Save the API key and secret. The secret is not retrievable later.
+1. **Run Terraform Scripts**  
+   Utilize Terraform scripts to set up the necessary infrastructure.  
+   [Access the instructions to run terraform scripts here](https://github.com/nidhi-ks/Flink-demo-for-Financial-Services/blob/main/FlinkSQL.md).
 
-```bash
-API Key    | <yourkey>                                          
-API Secret | <yoursecret>                                      
-```
+2. **Use Confluent Cloud UI**  
+   Set up your environment directly through the Confluent Cloud user interface.  
+   [Access the instruction to setup from Confluent Cloud UI here](https://github.com/nidhi-ks/Flink-demo-for-Financial-Services/blob/main/Running%20Terraform%20Scripts.md).
 
-```bash
-cat > terraform.tfvars <<EOF
-confluent_cloud_api_key = "{Cloud API Key}"
-confluent_cloud_api_secret = "{Cloud API Key Secret}"
-use_prefix = "{Your Name}"
-EOF
-```
-
-Run the following commands to provision the environment
-
-```bash
-terraform init
-terraform plan
-terraform apply
-```
-
-After completing the tasks, please remove your environment to avoid costs. You can recreate it anytime, using the steps above
-
-```bash
-terraform destroy
-```
-
-
+Feel free to choose the method that best suits your preferences!
 
 
