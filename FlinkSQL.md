@@ -27,11 +27,11 @@ Alternatively , we have terraform scripts to automate the steps , please refer t
 
 ### Create a new topic:
 - Navigate to the **Topics** tab and click **Create New Topic**.
-- Name the topic `trades-data`.
+- Name the topic `trades_data`.
 
 ### Create another topic:
 - Navigate to the **Topics** tab and click **Create New Topic**.
-- Name the topic `users-data`.
+- Name the topic `users_data`.
 
 ---
 
@@ -42,23 +42,28 @@ Alternatively , we have terraform scripts to automate the steps , please refer t
 
 ### Add a sample data connector:
 - Go to the **Connectors** tab, click **Add Connector**, and search for the **Sample Data** connector.
-- Select `trades-data` as the **target topic**.
+- Select `Stock trades` as the **target topic**.
 - Set **Output Message Format** to **Avro**.
 
 ### Configure the connector:
 - In the **Advanced Configuration** section, choose **Trades** as the dataset.
 - Leave the other settings as default and start the connector provisioning.
-- Verify data ingestion into the `trades-data` topic.
+- Verify data ingestion into the `trades_data` topic.
+
+### Advantages of using Avro Schema :
+
+Avro, when used with Confluent, provides compact binary serialization and supports schema evolution, ensuring compatibility across streaming data. Its integration with Confluent’s Schema Registry allows for easy management of schemas, enhancing data consistency. Additionally, Avro’s language-agnostic nature facilitates seamless integration with various applications in the Confluent ecosystem.
 
 ---
 
 ### Add another sample data connector:
 - Go to the **Connectors** tab, click **Add Connector**, and search for the **Sample Data** connector.
-- Select `users-data` as the target topic and set **Output Message Format** to **Avro**.
+- Select `users_data` as the target topic 
+- set **Output Message Format** to **Avro**.
 
 ### Configure the connector:
 - In the **Advanced Configuration** section, choose **Users** as the dataset.
-- Start the connector provisioning and verify data ingestion into the `users-data` topic.
+- Start the connector provisioning and verify data ingestion into the `users_data` topic.
 
 ---
 
@@ -94,6 +99,7 @@ Run the following command to view the table structure:
 ```sql
 SHOW CREATE TABLE trade_data;
 ```
+Shows the DDL statement for the table 
 
 Output : 
 
@@ -134,12 +140,14 @@ CREATE TABLE `trades_topic` (
   `userid` VARCHAR(2147483647) NOT NULL COMMENT 'The simulated user who executed the trade'
 );
 ```
+Creates a table trades_topic
 
 ```sql
 INSERT INTO trades_topic
 SELECT * 
 FROM trade_data;
 ```
+Inserts data into trades_topic table from trade_data table 
 
 ## Filtering in Flink: Price and Quantity Greater Than 0
 
@@ -157,6 +165,7 @@ CREATE TABLE `filtered_trades` (
   `userid` VARCHAR(2147483647) NOT NULL COMMENT 'The simulated user who executed the trade'
 );
 ```
+Creates table filteres_trades
 
 ```sql
 Copy code
@@ -167,6 +176,7 @@ WHERE quantity > 0
   AND price > 0 
   AND (side = 'BUY' OR side = 'SELL');
 ```
+Inserts data into filtered_trades after filtering data based on conditions from trades_topic 
 
 ### 4. Joining `trades_topic` and `users_data` Using an Inner Join
 
@@ -188,6 +198,9 @@ INNER JOIN
 ON 
     t.userid = u.userid;
 ```
+
+The SQL statement retrieves data by performing an inner join between two tables: trades_topic (aliased as t) and users_data (aliased as u). It selects specific columns from both tables where the userid in trades_topic matches the userid in users_data, allowing you to combine trade details with user information such as registration time, region, and gender.
+
 ### 5. Running Aggregates and Window Functions
 
 ```sql
@@ -199,6 +212,8 @@ CREATE TABLE broker_trade_volume (
   total_amount_traded BIGINT
 );
 ```
+
+Creates a table broker_trade_volume 
 
 ```sql
 INSERT INTO broker_trade_volume
@@ -216,8 +231,11 @@ GROUP BY
     window_start, 
     window_end;
 ```
+This SQL statement inserts aggregated trade data into the broker_trade_volume table. It selects the window_start, window_end, userid, and computes the total number of shares and total amount traded over 10-minute time windows, grouping the results by userid and the defined time windows
 
 ## 7. Pushing Data into MongoDB via Mongo Atlas Sink Connector
+
+For demonstration purposes, we have selected MongoDB Atlas as the data sink. However, you can choose from any of the fully managed connectors available in Confluent.
 
 ### Setting Up MongoDB Atlas Sink Connector
 
@@ -279,64 +297,6 @@ GROUP BY
 
 Please note that the user should have read write access on the database , collection specified in the connector . The data flows from Confluent Cloud to Mongo Atlas trade_data_volume collection . 
 Verify the data inside the Mongo Atlas UI . 
-
-## 8. Deploying a Flink statement in Terraform 
-
-Please refer to the below example to run a flink sql statement in terraform 
-
-Example : 
-
-```bash
-# Deploy a Flink SQL statement to Confluent Cloud.
-resource "confluent_flink_statement" "my_flink_statement" {
-  organization {
-    id = data.confluent_organization.my_org.id
-  }
-
-  environment {
-    id = confluent_environment.my_env.id
-  }
-
-  compute_pool {
-    id = confluent_flink_compute_pool.my_compute_pool.id
-  }
-
-  principal {
-    id = confluent_service_account.my_service_account.id
-  }
-
-  # This SQL reads data from source_topic, filters it, and ingests the filtered data into sink_topic.
-  statement = <<EOT
-    CREATE TABLE my_sink_topic AS
-    SELECT
-      window_start,
-      window_end,
-      SUM(price) AS total_revenue,
-      COUNT(*) AS cnt
-    FROM
-    TABLE(TUMBLE(TABLE `examples`.`marketplace`.`orders`, DESCRIPTOR($rowtime), INTERVAL '1' MINUTE))
-    GROUP BY window_start, window_end;
-    EOT
-
-  properties = {
-    "sql.current-catalog"  = confluent_environment.my_env.display_name
-    "sql.current-database" = confluent_kafka_cluster.my_kafka_cluster.display_name
-  }
-
-  rest_endpoint = data.confluent_flink_region.my_flink_region.rest_endpoint
-
-  credentials {
-    key    = confluent_api_key.my_flink_api_key.id
-    secret = confluent_api_key.my_flink_api_key.secret
-  }
-
-  depends_on = [
-    confluent_api_key.my_flink_api_key,
-    confluent_flink_compute_pool.my_compute_pool,
-    confluent_kafka_cluster.my_kafka_cluster
-  ]
-}
-```
 
 
 
