@@ -48,11 +48,11 @@ You can proceed with the workshop in the following ways:
 
 1. **Run Terraform Scripts**  
    Utilize Terraform scripts to set up the necessary infrastructure.  
-   [Access the instructions to run terraform scripts here](https://github.com/nidhi-ks/Flink-demo-for-Financial-Services/blob/main/FlinkSQL.md).
+   [Access the instructions to run terraform scripts here](https://github.com/nidhi-ks/Flink-demo-for-Financial-Services/blob/main/Running%20Terraform%20Scripts.md).
 
 2. **Use Confluent Cloud UI**  
    Set up your environment directly through the Confluent Cloud user interface.  
-   [Access the instruction to setup from Confluent Cloud UI here](https://github.com/nidhi-ks/Flink-demo-for-Financial-Services/blob/main/Running%20Terraform%20Scripts.md).
+   [Access the instruction to setup from Confluent Cloud UI here](https://github.com/nidhi-ks/Flink-demo-for-Financial-Services/blob/main/FlinkSQL.md).
 
 Feel free to choose the method that best suits your preferences!
 
