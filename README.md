@@ -55,8 +55,15 @@ You can proceed with the workshop in the following ways:
    [Access the instruction to setup from Confluent Cloud UI here](https://github.com/nidhi-ks/Flink-demo-for-Financial-Services/blob/main/FlinkSQL.md).
 
 3. **Tableflow**
-   If yoy want to stream your data to downstream iceberg tables , you can use tableflow
-   [Enable Tableflow](https://github.com/nidhi-ks/Flink-demo-for-Financial-Services/blob/main/tableflow%20lab)
+
+Confluent Tableflow simplifies getting your real-time Kafka topic data into open table formats like Apache Iceberg, stored in cloud object storage. It automatically handles schema evolution and data compaction, providing a "zero-ETL" path to create query-ready tables for your analytics engines.
+
+* **Streamlined Data Lakehouse:** Easily transform Kafka topics into analytical tables.
+* **Automated Maintenance:** Tableflow manages schema evolution and data compaction.
+* **Open Formats:** Data is materialized as Apache Iceberg for broad compatibility.
+
+[Get started: Enable Tableflow in this Lab](https://github.com/nidhi-ks/Flink-demo-for-Financial-Services/blob/main/tableflow%20lab)
+[Integrate Tableflow with AWS Glue and Query in AWS Athena](https://github.com/nidhi-ks/Flink-demo-for-Financial-Services/blob/main/Integrate%20tableflow%20with%20aws%20glue%20and%20query%20with%20Athena.md)
    
 
 Feel free to choose the method that best suits your preferences!
