@@ -54,6 +54,11 @@ You can proceed with the workshop in the following ways:
    Set up your environment directly through the Confluent Cloud user interface.  
    [Access the instruction to setup from Confluent Cloud UI here](https://github.com/nidhi-ks/Flink-demo-for-Financial-Services/blob/main/FlinkSQL.md).
 
+3. **Tableflow**
+   If yoy want to stream your data to downstream iceberg tables , you can use tableflow
+   [Enable Tableflow](https://github.com/nidhi-ks/Flink-demo-for-Financial-Services/blob/main/tableflow%20lab)
+   
+
 Feel free to choose the method that best suits your preferences!
 
 
