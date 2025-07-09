@@ -1,4 +1,4 @@
-#Configure AWS and Enable Tableflow
+# Configure AWS and Enable Tableflow
 
 ## Introduction
 
@@ -27,13 +27,13 @@ First, let's create the S3 bucket where Tableflow will store the Iceberg data.
 2.  Ensure you are in the same AWS region as your Confluent Kafka cluster (example: `us-east-2`).
 3.  Click on **Create Bucket** (top right).
 
-    ![Create S3 Bucket](<your-image-link-for-create-s3-bucket>)
+    
 
 4.  Configure the bucket:
     * **Bucket name**: Choose a globally unique name. `tableflow-bucket-<<Account-ID>>`, replacing `<<Account-ID>>` with your AWS Account ID. **Record this name.**
     * Leave other settings as default (e.g., Block Public Access) unless you have specific requirements.
 
-    ![Give the bucket a name](<your-image-link-for-bucket-name>)
+   
 
 5.  Scroll down and click **Create Bucket**.
 
@@ -51,7 +51,7 @@ Now, let's start the process in Confluent Cloud to connect to the S3 bucket.
 6.  On the "Create Permission Policy in AWS" screen, ensure **Tableflow S3 Bucket** is selected (or similar option representing S3 access).
 7.  **IMPORTANT**: Confluent Cloud will display a JSON permissions policy. Copy this `permissions-policy.json`. You will need it in the next step to create the IAM policy in AWS. **Keep this Confluent Cloud wizard page open.**
 
-    ![Copy permissions policy](<your-image-link-for-copy-permissions-policy>)
+   
 
 ---
 
@@ -100,7 +100,7 @@ Use the policy JSON copied from Confluent Cloud to create an IAM policy in AWS t
     }
     ```
 
-    ![Creating S3 access policy](<your-image-link-for-creating-s3-access-policy>)
+    
 
 7.  Click **Next** (or **Next: Tags -> Next: Review**).
 8.  Give the policy a descriptive **Name**, like `tableflow-s3-access-policy`.
@@ -119,7 +119,7 @@ Now, create the IAM role in AWS that Confluent Cloud will assume, using a trust 
 4.  Select **Custom trust policy** as the trusted entity type.
 5.  Paste the `trust-policy.json` you copied from Confluent Cloud into the JSON editor.
 
-    ![Custom trust policy](<your-image-link-for-custom-trust-policy>)
+    
 
 6.  Click **Next**.
 7.  On the Add permissions page, search for and select the IAM policy you created in Step 3 (e.g., `tableflow-s3-access-policy`).
@@ -129,7 +129,7 @@ Now, create the IAM role in AWS that Confluent Cloud will assume, using a trust 
 11. After the role is created, click **View Role** (or find it in the list and click its name).
 12. **IMPORTANT**: Find and copy the **ARN** (Amazon Resource Name) of the role you just created. It will look like `arn:aws:iam::<<Your AWS Account ID>>:role/<<Your Role Name>>`.
 
-    ![Copy Role ARN](<your-image-link-for-copy-role-arn>)
+  
 
 ---
 
@@ -143,7 +143,7 @@ Finally, provide the Role ARN to Confluent Cloud and update the role's trust pol
 4.  Click **Continue**.
 5.  **IMPORTANT**: Confluent Cloud will now display an updated Trust Policy JSON, which includes a unique `sts:ExternalId`. Copy this entire updated `trust-policy.json`.
 
-    ![Updated Trust Policy](<your-image-link-for-updated-trust-policy>)
+    
 
 6.  Go back to the AWS IAM Role you created (e.g., `quickstart-tableflow-assume-role`).
 7.  Select the **Trust relationships** tab.
@@ -162,21 +162,21 @@ With the Provider Integration successfully configured, you can now enable Tablef
     * In your Confluent Cloud console, go to your Environment, then select your Kafka Cluster.
     * In the left-hand navigation menu for your cluster, click on **Topics**. You should see a list of your topics.
 
-    ![Topics list](<your-image-link-for-topics-list>)
+   
 
 2.  **Select a Topic and Enable Tableflow:**
     * Find the specific topic you want to enable Tableflow for in the list (e.g., `clicks`, `customer_inquiries`, `orders`, etc.).
     * On the right-hand side of the row for that topic, in the "Tableflow" column, click the **Enable Tableflow** button/link.
     * ⚠️ **Note**: As of April 2025, Upsert Topics are not supported on Tableflow. This excludes the following topics from the lab, which you should not enable: `customers`, `electronics_promotions`, `order_customer_product`, `order_status`, and `products`.
 
-    ![Click Enable Tableflow](<your-image-link-for-click-enable-tableflow>)
+   
 
 3.  **Configure Storage:**
     * You will be asked to choose storage. Select **Configure custom storage**.
     * In the next menu, choose the Provider Integration you just created in Steps 2-5 (e.g., `s3-provider-integration`). You can identify it by the integration name or the IAM Role ARN.
     * Enter your AWS S3 bucket name (e.g., `tableflow-bucket-<<account-id>>`) where the Iceberg data should be written.
 
-    ![Provider Integration Details](<your-image-link-for-provider-integration-details>)
+   
 
 4.  **Launch Tableflow Sync:**
     * Review the configuration details on the final screen.
@@ -185,7 +185,7 @@ With the Provider Integration successfully configured, you can now enable Tablef
 5.  **Monitor Status:**
     * Back on the Topics page, you will see the status for that topic change under the Tableflow column, first to `Tableflow sync pending` and then shortly after to `Syncing`.
 
-    ![Tableflow Syncing Successful](<your-image-link-for-tableflow-syncing-successful>)
+   
 
 6.  **Repeat for Other Topics:**
     * Repeat steps 2-5 in this section for any other Kafka topics you wish to enable Tableflow on, using the same Provider Integration and S3 bucket.
