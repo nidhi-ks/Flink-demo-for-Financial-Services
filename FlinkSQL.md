@@ -92,19 +92,19 @@ Alternatively , we have terraform scripts to automate the steps , please refer t
 
 ## 6. Creating Tables in Flink
 
-### 1. View the `trade_data` table:
+### 1. View the `trades_data` table:
 
 Run the following command to view the table structure:
 
 ```sql
-SHOW CREATE TABLE trade_data;
+SHOW CREATE TABLE trades_data;
 ```
 Shows the DDL statement for the table 
 
 Output : 
 
 ```sql
-CREATE TABLE `trade_data` (
+CREATE TABLE `trades_data` (
   `key` VARBINARY(2147483647),
   `side` VARCHAR(2147483647) NOT NULL COMMENT 'A simulated trade side (buy or sell or short)',
   `quantity` INT NOT NULL COMMENT 'A simulated random quantity of the trade',
@@ -145,9 +145,9 @@ Creates a table trades_topic
 ```sql
 INSERT INTO trades_topic
 SELECT * 
-FROM trade_data;
+FROM trades_data;
 ```
-Inserts data into trades_topic table from trade_data table 
+Inserts data into trades_topic table from trades_data table 
 
 ## Filtering in Flink: Price and Quantity Greater Than 0
 
@@ -324,7 +324,7 @@ Detect if the price of a stock increases in two consecutive trades within a shor
 
 ```sql
 SELECT *
-FROM `nks-prod-2d34603e`.`cluster_1`.`trade_data`
+FROM `nks-prod-2d34603e`.`cluster_1`.`trades_data`
 MATCH_RECOGNIZE (
     PARTITION BY symbol 
     ORDER BY `$rowtime`
@@ -349,7 +349,7 @@ Pattern: Buy1 followed by Buy2 OR Sell1 followed by Sell2 by the same userid.
 
 ```sql
 SELECT *
-FROM `nks-prod-2d34603e`.`cluster_1`.`trade_data`
+FROM `nks-prod-2d34603e`.`cluster_1`.`trades_data`
 MATCH_RECOGNIZE (
     PARTITION BY userid 
     ORDER BY `$rowtime`
@@ -410,7 +410,7 @@ For demonstration purposes, we have selected MongoDB Atlas as the data sink. How
     "connection.user": "test-cflt",
     "connection.password": "*********",
     "database": "trade-data",
-    "collection": "trade_data_volume",
+    "collection": "trades_data_volume",
     "doc.id.strategy": "BsonOidStrategy",
     "doc.id.strategy.overwrite.existing": "false",
     "document.id.strategy.uuid.format": "string",
@@ -434,7 +434,7 @@ For demonstration purposes, we have selected MongoDB Atlas as the data sink. How
 
 ```
 
-Please note that the user should have read write access on the database , collection specified in the connector . The data flows from Confluent Cloud to Mongo Atlas trade_data_volume collection . 
+Please note that the user should have read write access on the database , collection specified in the connector . The data flows from Confluent Cloud to Mongo Atlas trades_data_volume collection . 
 Verify the data inside the Mongo Atlas UI . 
 
 
