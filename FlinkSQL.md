@@ -233,6 +233,174 @@ GROUP BY
 ```
 This SQL statement inserts aggregated trade data into the broker_trade_volume table. It selects the window_start, window_end, userid, and computes the total number of shares and total amount traded over 10-minute time windows, grouping the results by userid and the defined time windows
 
+## 7. Creating Tables with Primary Keys and Ingesting Data
+
+In Flink, when defining a primary key for a Kafka-backed table, the primary key columns typically need to appear at the beginning of the table schema (after any implicit Kafka `key` column). This ensures proper data distribution and enables `UPSERT` semantics if desired.
+
+### 7.1 `users_data_with_pk` Table
+
+This table is designed to hold user information with `userid` as the primary key.
+
+```sql
+CREATE TABLE `users_data_with_pk` (
+    `userid` VARCHAR(2147483647) NOT NULL,
+    `registertime` BIGINT NOT NULL,
+    `regionid` VARCHAR(2147483647) NOT NULL,
+    `gender` VARCHAR(2147483647) NOT NULL,
+    PRIMARY KEY (`userid`) NOT ENFORCED -- Declares userid as the primary key
+)
+WITH (
+  'changelog.mode' = 'upsert', -- Often 'upsert' when a PK is defined for Kafka
+  'connector' = 'confluent',
+  'kafka.cleanup-policy' = 'compact', -- 'compact' is common for upsert topics
+  'kafka.compaction.time' = '0 ms',
+  'kafka.max-message-size' = '2097164 bytes',
+  'kafka.retention.size' = '0 bytes',
+  'kafka.retention.time' = '7 d',
+  'key.format' = 'avro-registry', -- Assuming Avro format for the key
+  'key.fields' = 'userid', -- Specifies that 'userid' is the Kafka message key
+  'scan.bounded.mode' = 'unbounded',
+  'scan.startup.mode' = 'earliest-offset',
+  'value.format' = 'avro-registry'
+);
+```
+```
+INSERT INTO users_data_with_pk
+SELECT userid, registertime, regionid, gender
+FROM `nks-prod-2d34603e`.`cluster_1`.`users_data`;
+```
+
+Explanation: This SQL statement continuously inserts data from the existing users_data table (which is likely an append-only stream) into the new users_data_with_pk table. If users_data_with_pk is configured as an upsert sink, this INSERT statement will produce records that, based on the userid primary key, will either insert new users or update existing user information if the userid already exists.
+
+### 7.2 `transaction_data_with_pk` Table
+
+This table is designed to hold user information with `userid` as the primary key.
+
+
+```sql
+CREATE TABLE `transaction_data_with_pk` (
+    `transaction_id` BIGINT NOT NULL, -- Primary key column must be at the beginning
+    `card_id` BIGINT NOT NULL,
+    `user_id` VARCHAR(2147483647) NOT NULL,
+    `purchase_id` BIGINT NOT NULL,
+    `store_id` INT NOT NULL,
+    PRIMARY KEY (`transaction_id`) NOT ENFORCED -- Declares transaction_id as the primary key
+)
+DISTRIBUTED BY HASH(`transaction_id`) INTO 3 BUCKETS -- Distribute by PK for consistency
+WITH (
+  'changelog.mode' = 'upsert', -- Often 'upsert' when a PK is defined for Kafka
+  'connector' = 'confluent',
+  'kafka.cleanup-policy' = 'compact', -- 'compact' is common for upsert topics
+  'kafka.compaction.time' = '0 ms',
+  'kafka.max-message-size' = '2097164 bytes',
+  'kafka.retention.size' = '0 bytes',
+  'kafka.retention.time' = '7 d',
+  'key.format' = 'avro-registry', -- Assuming Avro format for the key
+  'key.fields' = 'transaction_id', -- Specifies that 'transaction_id' is the Kafka message key
+  'scan.bounded.mode' = 'unbounded',
+  'scan.startup.mode' = 'earliest-offset',
+  'value.format' = 'avro-registry'
+);
+```
+```
+insert into transaction_data_with_pk select `transaction_id` , 
+  `card_id` ,
+  `user_id` ,
+  `purchase_id` ,
+  `store_id` from `transaction_data`;
+```
+Explanation: This SQL statement creates transaction_data_with_pk with transaction_id as the primary key. Similar to users_data_with_pk, it's configured for upsert mode and transaction_id is used as the Kafka message key. The DISTRIBUTED BY HASH clause ensures that records with the same transaction_id are routed to the same partition, which is crucial for correct upsert semantics.
+
+## 8. Watermark Definition
+
+Watermarks are essential for proper event-time processing in Flink. They indicate the completeness of data up to a certain point in time, allowing Flink to correctly process late-arriving data and perform time-windowed aggregations and joins. The `$rowtime` pseudo-column represents the event time derived from the Kafka message timestamp.
+
+```sql
+ALTER TABLE `users_data_with_pk` MODIFY WATERMARK FOR `$rowtime` AS `$rowtime`;
+```
+```sql
+ALTER TABLE `transaction_data_with_pk` MODIFY WATERMARK FOR `$rowtime` AS `$rowtime`;
+```
+
+## 8. Temporal Join: Enriching Transactions with User Data
+
+Temporal joins allow you to join a stream with a versioned table (like a dimension table that changes over time) based on the event time of the stream. This is crucial for retrieving the "state" of a dimension at the precise moment a fact event occurred.
+
+```sql
+SELECT
+    td.transaction_id,
+    td.user_id,
+    td.purchase_id,
+    td.`$rowtime` AS transaction_event_time,
+    ud.regionid AS user_region_at_transaction_time,
+    ud.gender AS user_gender_at_transaction_time
+FROM
+    `transaction_data_with_pk` AS td
+INNER JOIN
+    `users_data_with_pk` FOR SYSTEM_TIME AS OF td.`$rowtime` AS ud
+ON
+    td.user_id = ud.userid;
+```
+Explanation: This query performs an event-time temporal join. For each transaction in transaction_data_with_pk (the left stream), it looks up the users_data_with_pk table (the right, versioned table) to find the user's regionid and gender as they were at the exact $rowtime of that particular transaction. 
+
+## 8. Pattern Matching: Detecting Suspicious Transaction Sequences
+
+MATCH_RECOGNIZE is a powerful Flink SQL feature for Complex Event Processing (CEP). It allows you to define patterns of events within a single stream and detect occurrences of these patterns. This is highly valuable for fraud detection, operational monitoring, and business analytics.
+
+### 8.1 Simple Price Movement (Increase) within a Symbol
+
+Detect if the price of a stock increases in two consecutive trades within a short interval, regardless of the user.
+
+```sql
+SELECT *
+FROM `nks-prod-2d34603e`.`cluster_1`.`trade_data`
+MATCH_RECOGNIZE (
+    PARTITION BY symbol -- Focus on price changes within a single stock
+    ORDER BY `$rowtime`
+    MEASURES
+        A.symbol AS initial_symbol, -- Qualified
+        A.price AS initial_price,
+        A.`$rowtime` AS initial_time,
+        B.symbol AS higher_symbol,  -- Qualified
+        B.price AS higher_price,
+        B.`$rowtime` AS higher_time
+    PATTERN (A B)
+    DEFINE
+        A AS TRUE, -- Any trade can be the start
+        B AS B.price > A.price AND B.`$rowtime` < A.`$rowtime` + INTERVAL '30' SECOND -- Price increased within 30 seconds
+) AS T;
+```
+### 8.2 Consecutive Buys or Sells by the Same User
+
+Detect if a user makes two consecutive 'BUY' orders or two consecutive 'SELL' orders for any symbol within a short period. This can indicate aggressive trading behavior.
+
+Pattern: Buy1 followed by Buy2 OR Sell1 followed by Sell2 by the same userid.
+
+```sql
+SELECT *
+FROM `nks-prod-2d34603e`.`cluster_1`.`trade_data`
+MATCH_RECOGNIZE (
+    PARTITION BY userid -- Focus on user's trading patterns
+    ORDER BY `$rowtime`
+    MEASURES
+        A.symbol AS symbol1,  -- Qualified
+        A.side AS side1,
+        A.quantity AS qty1,
+        A.`$rowtime` AS time1,
+        B.symbol AS symbol2,  -- Qualified
+        B.side AS side2,
+        B.quantity AS qty2,
+        B.`$rowtime` AS time2
+    PATTERN (A B)
+    DEFINE
+        A AS TRUE, -- Any trade can start
+        B AS (B.side = A.side) AND B.`$rowtime` < A.`$rowtime` + INTERVAL '1' MINUTE -- Same side trade within 1 minute
+) AS T;
+```
+
+Explanation: This query will find instances where a single user places two buy orders or two sell orders (regardless of symbol or quantity) within a minute. This is a broader pattern more likely to match with limited sample data.
+
+
 ## 7. Pushing Data into MongoDB via Mongo Atlas Sink Connector
 
 For demonstration purposes, we have selected MongoDB Atlas as the data sink. However, you can choose from any of the fully managed connectors available in Confluent.
