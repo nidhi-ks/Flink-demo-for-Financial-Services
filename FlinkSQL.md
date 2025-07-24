@@ -181,7 +181,7 @@ Inserts data into filtered_trades after filtering data based on conditions from 
 ### 4. Joining `trades_topic` and `users_data` Using an Inner Join
 
 ```sql
-SELECT 
+SELECT /*+ STATE_TTL('t'='6h', 'u'='2h') */
     t.side,
     t.quantity,
     t.symbol,
