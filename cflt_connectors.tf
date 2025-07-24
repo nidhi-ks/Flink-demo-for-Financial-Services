@@ -12,8 +12,6 @@ resource "confluent_service_account" "connectors" {
 # --------------------------------------------------------
 # Access Control List (ACL)
 # --------------------------------------------------------
-
-# Cluster permissions for connectors
 resource "confluent_kafka_acl" "connectors_source_describe_cluster" {
   kafka_cluster {
     id = confluent_kafka_cluster.cc_kafka_cluster.id
@@ -25,185 +23,265 @@ resource "confluent_kafka_acl" "connectors_source_describe_cluster" {
   operation     = "DESCRIBE"
   permission    = "ALLOW"
   host          = "*"
-  # Removed deprecated rest_endpoint and credentials
+  rest_endpoint = confluent_kafka_cluster.cc_kafka_cluster.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app_manager_kafka_cluster_key.id
+    secret = confluent_api_key.app_manager_kafka_cluster_key.secret
+  }
   lifecycle {
     prevent_destroy = false
   }
 }
 
-# Add ACL for DESCRIBE on all topics (often needed by connectors)
-resource "confluent_kafka_acl" "connectors_source_describe_topics" {
-  kafka_cluster {
+# New topics for trades_data, transaction_data, and users_data
+resource "confluent_kafka_topic" "trades_data" {
+   kafka_cluster {
     id = confluent_kafka_cluster.cc_kafka_cluster.id
   }
-  resource_type = "TOPIC"
-  resource_name = "" # An empty string with PREFIXED matches all topics
-  pattern_type  = "PREFIXED"
-  principal     = "User:${confluent_service_account.connectors.id}"
-  operation     = "DESCRIBE"
-  permission    = "ALLOW"
-  host          = "*"
+ 
+  topic_name         = "trades_data"
+  
+  rest_endpoint      = confluent_kafka_cluster.cc_kafka_cluster.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app_manager_kafka_cluster_key.id
+    secret = confluent_api_key.app_manager_kafka_cluster_key.secret
+  }
+  lifecycle {
+    prevent_destroy = false
+  }
+}
+
+resource "confluent_kafka_topic" "transaction_data" {
+   kafka_cluster {
+    id = confluent_kafka_cluster.cc_kafka_cluster.id
+  }
+  
+
+  topic_name         = "transaction_data"
+ 
+  rest_endpoint      = confluent_kafka_cluster.cc_kafka_cluster.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app_manager_kafka_cluster_key.id
+    secret = confluent_api_key.app_manager_kafka_cluster_key.secret
+  }
+  lifecycle {
+    prevent_destroy = false
+  }
+}
+
+resource "confluent_kafka_topic" "users_data" {
+  # CORRECTED: environment and kafka_cluster are now 'environment_id' and 'kafka_cluster_id'
+  
+   kafka_cluster {
+    id = confluent_kafka_cluster.cc_kafka_cluster.id
+  }
+  topic_name         = "users_data"
+  
+  rest_endpoint      = confluent_kafka_cluster.cc_kafka_cluster.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app_manager_kafka_cluster_key.id
+    secret = confluent_api_key.app_manager_kafka_cluster_key.secret
+  }
   lifecycle {
     prevent_destroy = false
   }
 }
 
 
-# Demo topics for trade
-# Renamed resources for uniqueness
-resource "confluent_kafka_acl" "connectors_source_create_topic_trade" {
-  kafka_cluster {
-    id = confluent_kafka_cluster.cc_kafka_cluster.id
-  }
-  resource_type = "TOPIC"
-  resource_name = "trade_"
-  pattern_type  = "PREFIXED"
-  principal     = "User:${confluent_service_account.connectors.id}"
-  operation     = "CREATE"
-  permission    = "ALLOW"
-  host          = "*"
-  # Removed deprecated rest_endpoint and credentials
-  lifecycle {
-    prevent_destroy = false
-  }
-}
-resource "confluent_kafka_acl" "connectors_source_write_topic_trade" {
-  kafka_cluster {
-    id = confluent_kafka_cluster.cc_kafka_cluster.id
-  }
-  resource_type = "TOPIC"
-  resource_name = "trade_"
-  pattern_type  = "PREFIXED"
-  principal     = "User:${confluent_service_account.connectors.id}"
-  operation     = "WRITE"
-  permission    = "ALLOW"
-  host          = "*"
-  # Removed deprecated rest_endpoint and credentials
-  lifecycle {
-    prevent_destroy = false
-  }
-}
-resource "confluent_kafka_acl" "connectors_source_read_topic_trade" {
-  kafka_cluster {
-    id = confluent_kafka_cluster.cc_kafka_cluster.id
-  }
-  resource_type = "TOPIC"
-  resource_name = "trade_"
-  pattern_type  = "PREFIXED"
-  principal     = "User:${confluent_service_account.connectors.id}"
-  operation     = "READ"
-  permission    = "ALLOW"
-  host          = "*"
-  # Removed deprecated rest_endpoint and credentials
-  lifecycle {
-    prevent_destroy = false
-  }
-}
-
-# Demo topics for users
-# Renamed resources for uniqueness
+# ACLs for USERS topic (users_data)
 resource "confluent_kafka_acl" "connectors_source_create_topic_users" {
   kafka_cluster {
     id = confluent_kafka_cluster.cc_kafka_cluster.id
   }
   resource_type = "TOPIC"
-  resource_name = "users_"
-  pattern_type  = "PREFIXED"
+  resource_name = confluent_kafka_topic.users_data.topic_name
+  pattern_type  = "LITERAL"
   principal     = "User:${confluent_service_account.connectors.id}"
   operation     = "CREATE"
   permission    = "ALLOW"
   host          = "*"
-  # Removed deprecated rest_endpoint and credentials
+  rest_endpoint = confluent_kafka_cluster.cc_kafka_cluster.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app_manager_kafka_cluster_key.id
+    secret = confluent_api_key.app_manager_kafka_cluster_key.secret
+  }
   lifecycle {
     prevent_destroy = false
   }
 }
+
 resource "confluent_kafka_acl" "connectors_source_write_topic_users" {
   kafka_cluster {
     id = confluent_kafka_cluster.cc_kafka_cluster.id
   }
   resource_type = "TOPIC"
-  resource_name = "users_"
-  pattern_type  = "PREFIXED"
+  resource_name = confluent_kafka_topic.users_data.topic_name
+  pattern_type  = "LITERAL"
   principal     = "User:${confluent_service_account.connectors.id}"
   operation     = "WRITE"
   permission    = "ALLOW"
   host          = "*"
-  # Removed deprecated rest_endpoint and credentials
+  rest_endpoint = confluent_kafka_cluster.cc_kafka_cluster.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app_manager_kafka_cluster_key.id
+    secret = confluent_api_key.app_manager_kafka_cluster_key.secret
+  }
   lifecycle {
     prevent_destroy = false
   }
 }
+
 resource "confluent_kafka_acl" "connectors_source_read_topic_users" {
   kafka_cluster {
     id = confluent_kafka_cluster.cc_kafka_cluster.id
   }
   resource_type = "TOPIC"
-  resource_name = "users_"
-  pattern_type  = "PREFIXED"
+  resource_name = confluent_kafka_topic.users_data.topic_name
+  pattern_type  = "LITERAL"
   principal     = "User:${confluent_service_account.connectors.id}"
   operation     = "READ"
   permission    = "ALLOW"
   host          = "*"
-  # Removed deprecated rest_endpoint and credentials
+  rest_endpoint = confluent_kafka_cluster.cc_kafka_cluster.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app_manager_kafka_cluster_key.id
+    secret = confluent_api_key.app_manager_kafka_cluster_key.secret
+  }
   lifecycle {
     prevent_destroy = false
   }
 }
 
-# Demo topics for transaction
-# Renamed resources for uniqueness
-resource "confluent_kafka_acl" "connectors_source_create_topic_transaction" {
+# ACLs for STOCK_TRADES topic (trades_data)
+resource "confluent_kafka_acl" "connectors_source_create_topic_trades_data" {
   kafka_cluster {
     id = confluent_kafka_cluster.cc_kafka_cluster.id
   }
   resource_type = "TOPIC"
-  resource_name = "transaction_"
-  pattern_type  = "PREFIXED"
+  resource_name = confluent_kafka_topic.trades_data.topic_name
+  pattern_type  = "LITERAL"
   principal     = "User:${confluent_service_account.connectors.id}"
   operation     = "CREATE"
   permission    = "ALLOW"
   host          = "*"
-  # Removed deprecated rest_endpoint and credentials
-  lifecycle {
-    prevent_destroy = false
+  rest_endpoint = confluent_kafka_cluster.cc_kafka_cluster.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app_manager_kafka_cluster_key.id
+    secret = confluent_api_key.app_manager_kafka_cluster_key.secret
   }
-}
-resource "confluent_kafka_acl" "connectors_source_write_topic_transaction" {
-  kafka_cluster {
-    id = confluent_kafka_cluster.cc_kafka_cluster.id
-  }
-  resource_type = "TOPIC"
-  resource_name = "transaction_"
-  pattern_type  = "PREFIXED"
-  principal     = "User:${confluent_service_account.connectors.id}"
-  operation     = "WRITE"
-  permission  = "ALLOW"
-  host          = "*"
-  # Removed deprecated rest_endpoint and credentials
-  lifecycle {
-    prevent_destroy = false
-  }
-}
-resource "confluent_kafka_acl" "connectors_source_read_topic_transaction" {
-  kafka_cluster {
-    id = confluent_kafka_cluster.cc_kafka_cluster.id
-  }
-  resource_type = "TOPIC"
-  resource_name = "transaction_"
-  pattern_type  = "PREFIXED"
-  principal     = "User:${confluent_service_account.connectors.id}"
-  operation     = "READ"
-  permission    = "ALLOW"
-  host          = "*"
-  # Removed deprecated rest_endpoint and credentials
   lifecycle {
     prevent_destroy = false
   }
 }
 
-# DLQ topics (for the connectors)
-# Renamed resources for uniqueness
+resource "confluent_kafka_acl" "connectors_source_write_topic_trades_data" {
+  kafka_cluster {
+    id = confluent_kafka_cluster.cc_kafka_cluster.id
+  }
+  resource_type = "TOPIC"
+  resource_name = confluent_kafka_topic.trades_data.topic_name
+  pattern_type  = "LITERAL"
+  principal     = "User:${confluent_service_account.connectors.id}"
+  operation     = "WRITE"
+  permission    = "ALLOW"
+  host          = "*"
+  rest_endpoint = confluent_kafka_cluster.cc_kafka_cluster.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app_manager_kafka_cluster_key.id
+    secret = confluent_api_key.app_manager_kafka_cluster_key.secret
+  }
+  lifecycle {
+    prevent_destroy = false
+  }
+}
+
+resource "confluent_kafka_acl" "connectors_source_read_topic_trades_data" {
+  kafka_cluster {
+    id = confluent_kafka_cluster.cc_kafka_cluster.id
+  }
+  resource_type = "TOPIC"
+  resource_name = confluent_kafka_topic.trades_data.topic_name
+  pattern_type  = "LITERAL"
+  principal     = "User:${confluent_service_account.connectors.id}"
+  operation     = "READ"
+  permission    = "ALLOW"
+  host          = "*"
+  rest_endpoint = confluent_kafka_cluster.cc_kafka_cluster.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app_manager_kafka_cluster_key.id
+    secret = confluent_api_key.app_manager_kafka_cluster_key.secret
+  }
+  lifecycle {
+    prevent_destroy = false
+  }
+}
+
+# ACLs for TRANSACTION topic (transaction_data)
+resource "confluent_kafka_acl" "connectors_source_create_topic_transaction_data" {
+  kafka_cluster {
+    id = confluent_kafka_cluster.cc_kafka_cluster.id
+  }
+  resource_type = "TOPIC"
+  resource_name = confluent_kafka_topic.transaction_data.topic_name
+  pattern_type  = "LITERAL"
+  principal     = "User:${confluent_service_account.connectors.id}"
+  operation     = "CREATE"
+  permission    = "ALLOW"
+  host          = "*"
+  rest_endpoint = confluent_kafka_cluster.cc_kafka_cluster.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app_manager_kafka_cluster_key.id
+    secret = confluent_api_key.app_manager_kafka_cluster_key.secret
+  }
+  lifecycle {
+    prevent_destroy = false
+  }
+}
+
+resource "confluent_kafka_acl" "connectors_source_write_topic_transaction_data" {
+  kafka_cluster {
+    id = confluent_kafka_cluster.cc_kafka_cluster.id
+  }
+  resource_type = "TOPIC"
+  resource_name = confluent_kafka_topic.transaction_data.topic_name
+  pattern_type  = "LITERAL"
+  principal     = "User:${confluent_service_account.connectors.id}"
+  operation     = "WRITE"
+  permission    = "ALLOW"
+  host          = "*"
+  rest_endpoint = confluent_kafka_cluster.cc_kafka_cluster.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app_manager_kafka_cluster_key.id
+    secret = confluent_api_key.app_manager_kafka_cluster_key.secret
+  }
+  lifecycle {
+    prevent_destroy = false
+  }
+}
+
+resource "confluent_kafka_acl" "connectors_source_read_topic_transaction_data" {
+  kafka_cluster {
+    id = confluent_kafka_cluster.cc_kafka_cluster.id
+  }
+  resource_type = "TOPIC"
+  resource_name = confluent_kafka_topic.transaction_data.topic_name
+  pattern_type  = "LITERAL"
+  principal     = "User:${confluent_service_account.connectors.id}"
+  operation     = "READ"
+  permission    = "ALLOW"
+  host          = "*"
+  rest_endpoint = confluent_kafka_cluster.cc_kafka_cluster.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app_manager_kafka_cluster_key.id
+    secret = confluent_api_key.app_manager_kafka_cluster_key.secret
+  }
+  lifecycle {
+    prevent_destroy = false
+  }
+}
+
+
+# DLQ topics (for the connectors) - Assuming a general DLQ prefix is still desired
 resource "confluent_kafka_acl" "connectors_source_create_topic_dlq" {
   kafka_cluster {
     id = confluent_kafka_cluster.cc_kafka_cluster.id
@@ -215,7 +293,11 @@ resource "confluent_kafka_acl" "connectors_source_create_topic_dlq" {
   operation     = "CREATE"
   permission    = "ALLOW"
   host          = "*"
-  # Removed deprecated rest_endpoint and credentials
+  rest_endpoint = confluent_kafka_cluster.cc_kafka_cluster.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app_manager_kafka_cluster_key.id
+    secret = confluent_api_key.app_manager_kafka_cluster_key.secret
+  }
   lifecycle {
     prevent_destroy = false
   }
@@ -231,7 +313,11 @@ resource "confluent_kafka_acl" "connectors_source_write_topic_dlq" {
   operation     = "WRITE"
   permission    = "ALLOW"
   host          = "*"
-  # Removed deprecated rest_endpoint and credentials
+  rest_endpoint = confluent_kafka_cluster.cc_kafka_cluster.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app_manager_kafka_cluster_key.id
+    secret = confluent_api_key.app_manager_kafka_cluster_key.secret
+  }
   lifecycle {
     prevent_destroy = false
   }
@@ -247,12 +333,15 @@ resource "confluent_kafka_acl" "connectors_source_read_topic_dlq" {
   operation     = "READ"
   permission    = "ALLOW"
   host          = "*"
-  # Removed deprecated rest_endpoint and credentials
+  rest_endpoint = confluent_kafka_cluster.cc_kafka_cluster.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app_manager_kafka_cluster_key.id
+    secret = confluent_api_key.app_manager_kafka_cluster_key.secret
+  }
   lifecycle {
     prevent_destroy = false
   }
 }
-
 # Consumer group
 resource "confluent_kafka_acl" "connectors_source_consumer_group" {
   kafka_cluster {
@@ -265,7 +354,11 @@ resource "confluent_kafka_acl" "connectors_source_consumer_group" {
   operation     = "READ"
   permission    = "ALLOW"
   host          = "*"
-  # Removed deprecated rest_endpoint and credentials
+  rest_endpoint = confluent_kafka_cluster.cc_kafka_cluster.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app_manager_kafka_cluster_key.id
+    secret = confluent_api_key.app_manager_kafka_cluster_key.secret
+  }
   lifecycle {
     prevent_destroy = false
   }
@@ -290,7 +383,21 @@ resource "confluent_api_key" "connector_key" {
       id = confluent_environment.cc_handson_env.id
     }
   }
-  # Removed unnecessary depends_on
+  depends_on = [
+    confluent_kafka_acl.connectors_source_create_topic_users,
+    confluent_kafka_acl.connectors_source_write_topic_users,
+    confluent_kafka_acl.connectors_source_read_topic_users,
+    confluent_kafka_acl.connectors_source_create_topic_trades_data,
+    confluent_kafka_acl.connectors_source_write_topic_trades_data,
+    confluent_kafka_acl.connectors_source_read_topic_trades_data,
+    confluent_kafka_acl.connectors_source_create_topic_transaction_data,
+    confluent_kafka_acl.connectors_source_write_topic_transaction_data,
+    confluent_kafka_acl.connectors_source_read_topic_transaction_data,
+    confluent_kafka_acl.connectors_source_create_topic_dlq,
+    confluent_kafka_acl.connectors_source_write_topic_dlq,
+    confluent_kafka_acl.connectors_source_read_topic_dlq,
+    confluent_kafka_acl.connectors_source_consumer_group,
+  ]
   lifecycle {
     prevent_destroy = false
   }
@@ -301,7 +408,7 @@ resource "confluent_api_key" "connector_key" {
 # --------------------------------------------------------
 
 # datagen_users
-resource "confluent_connector" "datagen_users" { # Renamed from datagen_products
+resource "confluent_connector" "datagen_users" {
   environment {
     id = confluent_environment.cc_handson_env.id
   }
@@ -311,32 +418,31 @@ resource "confluent_connector" "datagen_users" { # Renamed from datagen_products
   config_sensitive = {}
   config_nonsensitive = {
     "connector.class"          = "DatagenSource"
-    "name"                     = "${var.use_prefix}-users-connector" # Renamed connector name for uniqueness and clarity
+    "name"                     = "${var.use_prefix}datagen_users"
     "kafka.auth.mode"          = "SERVICE_ACCOUNT"
     "kafka.service.account.id" = confluent_service_account.connectors.id
-    "kafka.topic"              = "users_data"
+    "kafka.topic"              = confluent_kafka_topic.users_data.topic_name
     "output.data.format"       = "AVRO"
     "quickstart"               = "USERS"
     "tasks.max"                = "1"
     "max.interval"             = "500"
   }
   depends_on = [
-    confluent_kafka_acl.connectors_source_create_topic_users, # Corrected ACL dependency
-    confluent_kafka_acl.connectors_source_write_topic_users,  # Corrected ACL dependency
-    confluent_kafka_acl.connectors_source_read_topic_users,   # Corrected ACL dependency (though read not strictly needed for source)
+    confluent_kafka_acl.connectors_source_create_topic_users,
+    confluent_kafka_acl.connectors_source_write_topic_users,
+    confluent_kafka_acl.connectors_source_read_topic_users,
     confluent_kafka_acl.connectors_source_create_topic_dlq,
     confluent_kafka_acl.connectors_source_write_topic_dlq,
     confluent_kafka_acl.connectors_source_read_topic_dlq,
     confluent_kafka_acl.connectors_source_consumer_group,
-    confluent_kafka_acl.connectors_source_describe_topics, # Added dependency on new describe ACL
   ]
   lifecycle {
     prevent_destroy = false
   }
 }
 
-# datagen_trades
-resource "confluent_connector" "datagen_trades" { # Renamed from datagen_customers for clarity
+# datagen_trades_data
+resource "confluent_connector" "datagen_trades_data" {
   environment {
     id = confluent_environment.cc_handson_env.id
   }
@@ -346,32 +452,31 @@ resource "confluent_connector" "datagen_trades" { # Renamed from datagen_custome
   config_sensitive = {}
   config_nonsensitive = {
     "connector.class"          = "DatagenSource"
-    "name"                     = "${var.use_prefix}-trades-connector" # Renamed connector name for uniqueness and clarity
+    "name"                     = "${var.use_prefix}datagen_trades_data"
     "kafka.auth.mode"          = "SERVICE_ACCOUNT"
     "kafka.service.account.id" = confluent_service_account.connectors.id
-    "kafka.topic"              = "trade_data"
+    "kafka.topic"              = confluent_kafka_topic.trades_data.topic_name
     "output.data.format"       = "AVRO"
     "quickstart"               = "STOCK_TRADES"
     "tasks.max"                = "1"
     "max.interval"             = "500"
   }
   depends_on = [
-    confluent_kafka_acl.connectors_source_create_topic_trade, # Corrected ACL dependency
-    confluent_kafka_acl.connectors_source_write_topic_trade,  # Corrected ACL dependency
-    confluent_kafka_acl.connectors_source_read_topic_trade,   # Corrected ACL dependency (though read not strictly needed for source)
+    confluent_kafka_acl.connectors_source_create_topic_trades_data,
+    confluent_kafka_acl.connectors_source_write_topic_trades_data,
+    confluent_kafka_acl.connectors_source_read_topic_trades_data,
     confluent_kafka_acl.connectors_source_create_topic_dlq,
     confluent_kafka_acl.connectors_source_write_topic_dlq,
     confluent_kafka_acl.connectors_source_read_topic_dlq,
     confluent_kafka_acl.connectors_source_consumer_group,
-    confluent_kafka_acl.connectors_source_describe_topics, # Added dependency on new describe ACL
   ]
   lifecycle {
     prevent_destroy = false
   }
 }
 
-# datagen_transactions
-resource "confluent_connector" "datagen_transactions" { # Renamed from datagen_customers for clarity
+# datagen_transaction_data
+resource "confluent_connector" "datagen_transaction_data" {
   environment {
     id = confluent_environment.cc_handson_env.id
   }
@@ -381,24 +486,23 @@ resource "confluent_connector" "datagen_transactions" { # Renamed from datagen_c
   config_sensitive = {}
   config_nonsensitive = {
     "connector.class"          = "DatagenSource"
-    "name"                     = "${var.use_prefix}-transactions-connector" # Renamed connector name for uniqueness and clarity
+    "name"                     = "${var.use_prefix}datagen_transaction_data"
     "kafka.auth.mode"          = "SERVICE_ACCOUNT"
     "kafka.service.account.id" = confluent_service_account.connectors.id
-    "kafka.topic"              = "transaction_data"
-    "output.data.format"       = "AVRO"
-    "quickstart"               = "TRANSACTION"
+    "kafka.topic"              = confluent_kafka_topic.transaction_data.topic_name
+    "output.data.format"       = "AVRO" # Changed from JSON_SR to AVRO
+    "quickstart"               = "TRANSACTIONS"
     "tasks.max"                = "1"
     "max.interval"             = "500"
   }
   depends_on = [
-    confluent_kafka_acl.connectors_source_create_topic_transaction, # Corrected ACL dependency
-    confluent_kafka_acl.connectors_source_write_topic_transaction,  # Corrected ACL dependency
-    confluent_kafka_acl.connectors_source_read_topic_transaction,   # Corrected ACL dependency (though read not strictly needed for source)
+    confluent_kafka_acl.connectors_source_create_topic_transaction_data,
+    confluent_kafka_acl.connectors_source_write_topic_transaction_data,
+    confluent_kafka_acl.connectors_source_read_topic_transaction_data,
     confluent_kafka_acl.connectors_source_create_topic_dlq,
     confluent_kafka_acl.connectors_source_write_topic_dlq,
     confluent_kafka_acl.connectors_source_read_topic_dlq,
     confluent_kafka_acl.connectors_source_consumer_group,
-    confluent_kafka_acl.connectors_source_describe_topics, # Added dependency on new describe ACL
   ]
   lifecycle {
     prevent_destroy = false
