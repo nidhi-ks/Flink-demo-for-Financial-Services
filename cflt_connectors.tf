@@ -156,6 +156,67 @@ resource "confluent_kafka_acl" "connectors_source_read_topic_demo1" {
   }
 }
 
+# Demo topics for transaction
+resource "confluent_kafka_acl" "connectors_source_create_topic_demo" {
+  kafka_cluster {
+    id = confluent_kafka_cluster.cc_kafka_cluster.id
+  }
+  resource_type = "TOPIC"
+  resource_name = "transaction_"
+  pattern_type  = "PREFIXED"
+  principal     = "User:${confluent_service_account.connectors.id}"
+  operation     = "CREATE"
+  permission    = "ALLOW"
+  host          = "*"
+  rest_endpoint = confluent_kafka_cluster.cc_kafka_cluster.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app_manager_kafka_cluster_key.id
+    secret = confluent_api_key.app_manager_kafka_cluster_key.secret
+  }
+  lifecycle {
+    prevent_destroy = false
+  }
+}
+resource "confluent_kafka_acl" "connectors_source_write_topic_demo" {
+  kafka_cluster {
+    id = confluent_kafka_cluster.cc_kafka_cluster.id
+  }
+  resource_type = "TOPIC"
+  resource_name = "transaction_"
+  pattern_type  = "PREFIXED"
+  principal     = "User:${confluent_service_account.connectors.id}"
+  operation     = "WRITE"
+  permission    = "ALLOW"
+  host          = "*"
+  rest_endpoint = confluent_kafka_cluster.cc_kafka_cluster.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app_manager_kafka_cluster_key.id
+    secret = confluent_api_key.app_manager_kafka_cluster_key.secret
+  }
+  lifecycle {
+    prevent_destroy = false
+  }
+}
+resource "confluent_kafka_acl" "connectors_source_read_topic_demo" {
+  kafka_cluster {
+    id = confluent_kafka_cluster.cc_kafka_cluster.id
+  }
+  resource_type = "TOPIC"
+  resource_name = "transaction_"
+  pattern_type  = "PREFIXED"
+  principal     = "User:${confluent_service_account.connectors.id}"
+  operation     = "READ"
+  permission    = "ALLOW"
+  host          = "*"
+  rest_endpoint = confluent_kafka_cluster.cc_kafka_cluster.rest_endpoint
+  credentials {
+    key    = confluent_api_key.app_manager_kafka_cluster_key.id
+    secret = confluent_api_key.app_manager_kafka_cluster_key.secret
+  }
+  lifecycle {
+    prevent_destroy = false
+  }
+}
 
 # DLQ topics (for the connectors)
 resource "confluent_kafka_acl" "connectors_source_create_topic_dlq" {
