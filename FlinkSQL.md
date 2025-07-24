@@ -247,24 +247,10 @@ CREATE TABLE `users_data_with_pk` (
     `registertime` BIGINT NOT NULL,
     `regionid` VARCHAR(2147483647) NOT NULL,
     `gender` VARCHAR(2147483647) NOT NULL,
-    PRIMARY KEY (`userid`) NOT ENFORCED -- Declares userid as the primary key
-)
-WITH (
-  'changelog.mode' = 'upsert', -- Often 'upsert' when a PK is defined for Kafka
-  'connector' = 'confluent',
-  'kafka.cleanup-policy' = 'compact', -- 'compact' is common for upsert topics
-  'kafka.compaction.time' = '0 ms',
-  'kafka.max-message-size' = '2097164 bytes',
-  'kafka.retention.size' = '0 bytes',
-  'kafka.retention.time' = '7 d',
-  'key.format' = 'avro-registry', -- Assuming Avro format for the key
-  'key.fields' = 'userid', -- Specifies that 'userid' is the Kafka message key
-  'scan.bounded.mode' = 'unbounded',
-  'scan.startup.mode' = 'earliest-offset',
-  'value.format' = 'avro-registry'
+    PRIMARY KEY (`userid`) NOT ENFORCED
 );
 ```
-```
+```sql
 INSERT INTO users_data_with_pk
 SELECT userid, registertime, regionid, gender
 FROM `nks-prod-2d34603e`.`cluster_1`.`users_data`;
@@ -279,30 +265,15 @@ This table is designed to hold user information with `userid` as the primary key
 
 ```sql
 CREATE TABLE `transaction_data_with_pk` (
-    `transaction_id` BIGINT NOT NULL, -- Primary key column must be at the beginning
+    `transaction_id` BIGINT NOT NULL, 
     `card_id` BIGINT NOT NULL,
     `user_id` VARCHAR(2147483647) NOT NULL,
     `purchase_id` BIGINT NOT NULL,
     `store_id` INT NOT NULL,
-    PRIMARY KEY (`transaction_id`) NOT ENFORCED -- Declares transaction_id as the primary key
-)
-DISTRIBUTED BY HASH(`transaction_id`) INTO 3 BUCKETS -- Distribute by PK for consistency
-WITH (
-  'changelog.mode' = 'upsert', -- Often 'upsert' when a PK is defined for Kafka
-  'connector' = 'confluent',
-  'kafka.cleanup-policy' = 'compact', -- 'compact' is common for upsert topics
-  'kafka.compaction.time' = '0 ms',
-  'kafka.max-message-size' = '2097164 bytes',
-  'kafka.retention.size' = '0 bytes',
-  'kafka.retention.time' = '7 d',
-  'key.format' = 'avro-registry', -- Assuming Avro format for the key
-  'key.fields' = 'transaction_id', -- Specifies that 'transaction_id' is the Kafka message key
-  'scan.bounded.mode' = 'unbounded',
-  'scan.startup.mode' = 'earliest-offset',
-  'value.format' = 'avro-registry'
+    PRIMARY KEY (`transaction_id`) NOT ENFORCED 
 );
 ```
-```
+```sql
 insert into transaction_data_with_pk select `transaction_id` , 
   `card_id` ,
   `user_id` ,
@@ -355,19 +326,19 @@ Detect if the price of a stock increases in two consecutive trades within a shor
 SELECT *
 FROM `nks-prod-2d34603e`.`cluster_1`.`trade_data`
 MATCH_RECOGNIZE (
-    PARTITION BY symbol -- Focus on price changes within a single stock
+    PARTITION BY symbol 
     ORDER BY `$rowtime`
     MEASURES
-        A.symbol AS initial_symbol, -- Qualified
+        A.symbol AS initial_symbol, 
         A.price AS initial_price,
         A.`$rowtime` AS initial_time,
-        B.symbol AS higher_symbol,  -- Qualified
+        B.symbol AS higher_symbol,  
         B.price AS higher_price,
         B.`$rowtime` AS higher_time
     PATTERN (A B)
     DEFINE
         A AS TRUE, -- Any trade can be the start
-        B AS B.price > A.price AND B.`$rowtime` < A.`$rowtime` + INTERVAL '30' SECOND -- Price increased within 30 seconds
+        B AS B.price > A.price AND B.`$rowtime` < A.`$rowtime` + INTERVAL '30' SECOND -
 ) AS T;
 ```
 ### 8.2 Consecutive Buys or Sells by the Same User
@@ -380,21 +351,21 @@ Pattern: Buy1 followed by Buy2 OR Sell1 followed by Sell2 by the same userid.
 SELECT *
 FROM `nks-prod-2d34603e`.`cluster_1`.`trade_data`
 MATCH_RECOGNIZE (
-    PARTITION BY userid -- Focus on user's trading patterns
+    PARTITION BY userid 
     ORDER BY `$rowtime`
     MEASURES
-        A.symbol AS symbol1,  -- Qualified
+        A.symbol AS symbol1,  
         A.side AS side1,
         A.quantity AS qty1,
         A.`$rowtime` AS time1,
-        B.symbol AS symbol2,  -- Qualified
+        B.symbol AS symbol2,  
         B.side AS side2,
         B.quantity AS qty2,
         B.`$rowtime` AS time2
     PATTERN (A B)
     DEFINE
-        A AS TRUE, -- Any trade can start
-        B AS (B.side = A.side) AND B.`$rowtime` < A.`$rowtime` + INTERVAL '1' MINUTE -- Same side trade within 1 minute
+        A AS TRUE, 
+        B AS (B.side = A.side) AND B.`$rowtime` < A.`$rowtime` + INTERVAL '1' MINUTE 
 ) AS T;
 ```
 
